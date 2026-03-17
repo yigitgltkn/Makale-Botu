@@ -183,5 +183,5 @@ except json.JSONDecodeError:
 except Exception as e:
     print(f"\n❌ Beklenmeyen bir hata oluştu: {e}")
     traceback.print_exc()
-finally:
-    input("\nÇıkmak için Enter tuşuna basın...")
+#finally:
+    #input("\nÇıkmak için Enter tuşuna basın...")
