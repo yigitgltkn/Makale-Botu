@@ -11,6 +11,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    
+    # EKLENEN KISIM 1: Botun depoya dosya yükleyebilmesi için yazma izni
+    permissions:
+      contents: write 
+
     steps:
       - name: Kodlari Cek
         uses: actions/checkout@v4
@@ -26,3 +31,15 @@ jobs:
 
       - name: Scripti Calistir
         run: python main.py
+        # EĞER ŞİFRELERİNİ GITHUB SECRETS'A KOYDUYSAN BURAYI AÇ (Güvenlik için şiddetle tavsiye ederim)
+        # env:
+        #   GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      # EKLENEN KISIM 2: Kullanılan kelimeyi txt dosyasından silip GitHub'a geri kaydetme
+      - name: Kullanilan Kelimeyi Sil ve Kaydet
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add keywords.txt
+          git commit -m "Auto-update: Kullanilan kelime silindi [skip ci]" || echo "Değişiklik yok"
+          git push
