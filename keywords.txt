@@ -1,4 +1,3 @@
-Deploying Edge AI hardware for real-time pipeline leak detection under harsh conditions
 IEC 62443 compliance strategies for legacy Reliance SCADA deployments
 Real-time load forecasting using C# and historical SCADA power data
 Integrating custom vector graphics into GeoSCADA without compromising load times
