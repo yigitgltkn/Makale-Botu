@@ -20,7 +20,7 @@ WP_CATEGORIES = {
     "Hydraulic Modeling": 408,
     "Infrastructure": 401,
     "SCADA": 283,
-    "SCADA": 496,
+    "Energy": 496,
     "Water - AI": 281
 }
 # ==========================================
