@@ -1,3 +1,4 @@
+import os
 import random
 import json
 import requests
@@ -23,6 +24,7 @@ WP_CATEGORIES = {
     "Energy": 496,
     "Water - AI": 281
 }
+
 # ==========================================
 # 2. WORDPRESS HABERLEŞME MODÜLÜ
 # ==========================================
@@ -93,61 +95,108 @@ try:
     
     client = genai.Client(api_key=GEMINI_API_KEY)
     
+    # Kategori Seçimi
     secilen_kategori_adi = random.choice(list(WP_CATEGORIES.keys()))
     kategori_id = WP_CATEGORIES[secilen_kategori_adi]
     print(f"Seçilen Kategori: {secilen_kategori_adi} (ID: {kategori_id})")
-    
-    print("Yapay zeka bu kategori için rekabetçi bir başlık düşünüyor...")
-    baslik_prompt = f"""Act as an expert technical editor. Generate a highly engaging, SEO-optimized blog post title about '{secilen_kategori_adi}' in the energy, water software, SCADA, or AI engineering industry. 
-    CRITICAL RULE: The title MUST be either:
-1.	A competitive comparison (e.g., 'A vs B: Which is better for...', 'Claude vs ChatGPT for...').
-2.	A 'Top X' list (e.g., 'Top 5 SCADA Screen Design Tools...').
-3.	A specific 'Best for' guide (e.g., 'Best Hydraulic Modeling Software for Beginners').
-4.	Ultrasonic vs electromagnetic flowmeter, which is more suitable?
-5.	How to develop SCADA with Claude AI from start to finish? Learning from scratch.
-    Return ONLY the exact title text. No quotes."""
+
+    # ==========================================
+    # DOSYADAN KONU OKUMA VE SİLME (ASLA TEKRARA DÜŞMEME)
+    # ==========================================
+    dosya_adi = "keywords.txt"
+    if not os.path.exists(dosya_adi):
+        raise FileNotFoundError(f"❌ '{dosya_adi}' bulunamadı! Lütfen kelime listenizi ekleyin.")
+
+    with open(dosya_adi, "r", encoding="utf-8") as file:
+        satirlar = [satir.strip() for satir in file.readlines() if satir.strip()]
+
+    if not satirlar:
+        raise ValueError(f"❌ '{dosya_adi}' dosyası boş! Lütfen yeni konular ekleyin.")
+
+    # İlk sıradaki konuyu al ve listeden çıkar
+    secilen_hedef_konu = satirlar.pop(0)
+
+    # Kalanları dosyaya geri yaz (Böylece aynı konu bir daha ASLA seçilmez)
+    with open(dosya_adi, "w", encoding="utf-8") as file:
+        for satir in satirlar:
+            file.write(satir + "\n")
+
+    print(f"🎯 Hedeflenen Niş Konu: {secilen_hedef_konu}")
+    print(f"Kalan Konu Sayısı: {len(satirlar)}")
+
+    # ==========================================
+    # DİNAMİK ŞABLON VE PERSONA SEÇİMİ
+    # ==========================================
+    hedef_kitleler = ["Senior SCADA Engineers in NA/EU", "Water Infrastructure Managers", "Industrial Software Developers", "Energy Grid Architects"]
+    yazar_personasi = [
+        "a strict, data-driven Senior SCADA Architect",
+        "a highly practical Field Automation Engineer",
+        "an academic researcher focusing on Water Infrastructure AI",
+        "a pragmatic Industrial Cybersecurity (IEC 62443) Auditor"
+    ]
+    makale_yapisi = [
+        "A step-by-step technical troubleshooting and implementation guide.",
+        "A deep-dive technical case study focusing on real-world engineering constraints.",
+        "A rigorous comparison format highlighting hidden technical pitfalls and performance metrics.",
+        "A myth-busting technical analysis challenging common industry assumptions."
+    ]
+
+    secilen_kitle = random.choice(hedef_kitleler)
+    secilen_persona = random.choice(yazar_personasi)
+    secilen_yapi = random.choice(makale_yapisi)
+
+    # --- BAŞLIK ÜRETİMİ ---
+    print("\nYapay zeka bu konu için rekabetçi bir başlık düşünüyor...")
+    baslik_prompt = f"""Act as {secilen_persona} writing for a B2B engineering blog. 
+    Generate ONE highly engaging, click-worthy, SEO-optimized blog post title specifically about '{secilen_hedef_konu}'. 
+    Target audience: {secilen_kitle}.
+    CRITICAL RULE: The title MUST sound like an advanced engineering guide or a deep-dive technical solution.
+    Return ONLY the exact title text. No quotes, no extra formatting."""
     
     baslik_yaniti = client.models.generate_content(
         model='gemini-3-flash-preview',
-        contents=baslik_prompt
+        contents=baslik_prompt,
+        config=types.GenerateContentConfig(temperature=0.7)
     )
     uretilen_baslik = baslik_yaniti.text.strip().replace('"', '')
     print(f"🤖 Üretilen Başlık: {uretilen_baslik}")
     
-    print(f"\n1. Makale, tablolar ve etiketler yazılıyor ('gemini-3-flash-preview')...")
-    
-    # YENİ: Meta Açıklaması kuralı eklendi!
+    # --- UZMAN SEVİYESİ MAKALE ÜRETİMİ (JSON Garantili) ---
+    print(f"\n1. Makale, kod blokları ve tablolar yazılıyor ('gemini-3-flash-preview')...")
     makale_prompt = f"""
-    Write a highly competitive, engaging, and SEO-optimized technical article in English about "{uretilen_baslik}".
-    Target audience: Software engineers, SCADA developers, and water infrastructure professionals.
-    
+    Act as {secilen_persona}. Write a highly competitive, expert-level B2B technical article in English about "{uretilen_baslik}".
+    Target audience: {secilen_kitle}.
+
     CRITICAL RULES:
-    1. META DESCRIPTION HOOK: The VERY FIRST paragraph MUST be exactly 1-2 sentences (strictly under 160 characters). It must act as a high-converting SEO Meta Description that perfectly summarizes the value of the article and compels the user to click.
-    2. The article MUST be at least 700 words.
-    3. MUST include at least one detailed HTML comparison <table> (e.g., comparing features, pricing, or pros/cons). Use proper <table>, <tr>, <th>, <td> tags.
-    4. Use proper HTML formatting overall (<h2>, <h3>, <ul>, <strong>).
-    5. Provide 3 to 5 highly relevant SEO tags as a JSON array.
-    
-    You MUST return the response ONLY as a valid JSON object exactly like this:
-    {{"content": "...", "tags": ["tag1", "tag2", "tag3"]}}
+    1. STRUCTURE: The article must follow this specific format: {secilen_yapi} The article MUST be comprehensive (at least 700 words).
+    2. META DESCRIPTION HOOK: The VERY FIRST paragraph MUST be exactly 1-2 sentences (strictly under 160 characters) acting as a high-converting SEO Meta Description.
+    3. REGIONAL STANDARDS: You MUST naturally mention relevant North American (e.g., AWWA, EPA, NERC CIP) OR European (e.g., IEC 62443, NIS2) engineering standards.
+    4. TECHNICAL DEPTH: Include at least one practical code snippet, SQL query, or configuration example relevant to the topic formatted within proper HTML <code> and <pre> tags.
+    5. EXTERNAL LINKS: Include at least 2 HTML <a> tags linking to authoritative sources (like IEEE, official software docs).
+    6. COMPARISON/DATA: MUST include at least one detailed HTML <table> for technical comparison or data structuring. Use proper <table>, <tr>, <th>, <td> tags.
+    7. FORMATTING: Use strict, clean HTML (<h2>, <h3>, <ul>, <strong>). Do NOT wrap the HTML in markdown blocks.
+    8. SEO TAGS: Provide 3 to 5 highly relevant SEO tags.
+
+    Output format MUST be a single valid JSON object with EXACTLY two keys: 
+    - "content": A string containing the full HTML article.
+    - "tags": An array of strings containing the tags.
     """
     
     response_text = client.models.generate_content(
         model='gemini-3-flash-preview',
-        contents=makale_prompt
+        contents=makale_prompt,
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            temperature=0.6
+        )
     )
-    raw_text = response_text.text.strip()
     
-    if raw_text.startswith("```json"):
-        raw_text = raw_text[7:]
-    if raw_text.endswith("```"):
-        raw_text = raw_text[:-3]
-        
-    makale_verisi = json.loads(raw_text.strip())
+    makale_verisi = json.loads(response_text.text)
     icerik = makale_verisi.get("content", "")
     uretilen_etiketler = makale_verisi.get("tags", [])
-    print("✅ Makale metni ve tablolar başarıyla oluşturuldu!")
+    print("✅ Uzman seviyesi makale başarıyla oluşturuldu!")
 
+    # --- ETİKETLER ---
     print(f"\nEtiketler WordPress'e işleniyor: {uretilen_etiketler}")
     etiket_id_listesi = []
     for etiket in uretilen_etiketler:
@@ -155,8 +204,17 @@ try:
         if e_id:
             etiket_id_listesi.append(e_id)
 
+    # --- GÖRSEL ÜRETİMİ (Rastgele Stiller) ---
     print(f"\n2. Kapak görseli oluşturuluyor ('gemini-3.1-flash-image-preview')...")
-    gorsel_prompt = f"A high-quality, professional, realistic blog cover image for the technical topic: '{uretilen_baslik}'. Industrial, modern, clean style, no text in the image."
+    gorsel_stilleri = [
+        "Blueprint/schematic technical drawing style, dark mode",
+        "Photorealistic industrial control room, cinematic lighting",
+        "Minimalist modern tech corporate illustration",
+        "High-tech server rack and SCADA screens, isometric 3D render",
+        "Futuristic AI laboratory setting, high contrast"
+    ]
+    secilen_stil = random.choice(gorsel_stilleri)
+    gorsel_prompt = f"A professional blog cover image for the engineering topic: '{uretilen_baslik}'. Art style: {secilen_stil}. Clean composition, NO text, NO letters, NO words."
     
     response_image = client.models.generate_content(
         model='gemini-3.1-flash-image-preview',
@@ -171,18 +229,17 @@ try:
             
     if not resim_bytes:
         raise ValueError("Modelden görsel verisi alınamadı!")
-    print("✅ Görsel başarıyla oluşturuldu!")
+    print(f"✅ Görsel başarıyla oluşturuldu! (Kullanılan Stil: {secilen_stil})")
 
-    dosya_adi = f"kapak_{secilen_kategori_adi.replace(' ', '_').lower()}.jpg"
+    # --- YAYINLAMA ---
+    dosya_adi = f"kapak_{secilen_kategori_adi.replace(' ', '_').lower()}_{random.randint(1000,9999)}.jpg"
     medya_id = wp_medya_yukle_hafizadan(resim_bytes, dosya_adi=dosya_adi)
     
     makale_yayinla(uretilen_baslik, icerik, kategori_id, medya_id, etiket_id_listesi)
 
 except json.JSONDecodeError:
-    print("\n❌ Makale JSON formatında oluşturulamadı. Lütfen prompt'u veya model yanıtını kontrol edin.")
+    print("\n❌ Makale JSON formatında oluşturulamadı. Lütfen logu inceleyin.")
     traceback.print_exc()
 except Exception as e:
     print(f"\n❌ Beklenmeyen bir hata oluştu: {e}")
     traceback.print_exc()
-#finally:
-    #input("\nÇıkmak için Enter tuşuna basın...")
