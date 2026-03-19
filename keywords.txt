@@ -1,4 +1,3 @@
-Integrating custom vector graphics into GeoSCADA without compromising load times
 DNP3 vs Modbus TCP latency comparison in renewable energy substations
 Calibrating hydraulic models using real-time SCADA telemetry feeds
 Developing an AI-powered SCADA anomaly detection bot using C#
