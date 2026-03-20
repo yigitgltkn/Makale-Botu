@@ -1,4 +1,3 @@
-DNP3 vs Modbus TCP latency comparison in renewable energy substations
 Calibrating hydraulic models using real-time SCADA telemetry feeds
 Developing an AI-powered SCADA anomaly detection bot using C#
 Securing Virtual Power Plants (VPP) under European NIS2 directives
