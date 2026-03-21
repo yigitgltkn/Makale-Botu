@@ -4,10 +4,10 @@ on:
   schedule:
     # Günde 2 defa çalışır. (UTC saatine göredir. Türkiye saati ile sabah 09:00 ve akşam 18:00)
     - cron: '0 6,15 * * *'
-  workflow_dispatch: # Senin yaptığın gibi manuel tetikleme butonu
+  workflow_dispatch: # Manuel tetikleme butonu
 
 env:
-  # Ekran görüntüsündeki Node.js 20 uyarısını tamamen çözen kod:
+  # Node.js 20 uyarılarını global olarak çözen kod:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
@@ -18,13 +18,12 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5 # v4 yerine v5 yapıyoruz
-
-      - name: Set up Python
-        uses: actions/setup-python@v6 # v5 yerine v6 yapıyoruz
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
+        env:
+          ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
         with:
           python-version: '3.10'
 
@@ -35,13 +34,8 @@ jobs:
 
       - name: Run Publisher Script
         env:
-          # Python kodundaki os.getenv() komutları bu sırları (Secrets) çekecek
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           WP_APP_PASS: ${{ secrets.WP_APP_PASS }}
-          # Aşağıdakileri Secrets'a eklemediyseniz doğrudan kodun içinde de kalabilir, 
-          # ancak buraya eklediyseniz başındaki '#' işaretini kaldırın.
-          # WP_URL: ${{ secrets.WP_URL }}
-          # WP_USER: ${{ secrets.WP_USER }}
         run: python main.py
 
       - name: Commit and Push Updated Keywords
