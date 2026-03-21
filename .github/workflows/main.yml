@@ -1,45 +1,50 @@
-name: Otomatik WordPress Blog Botu
+name: Auto WP Publisher Bot
 
 on:
   schedule:
-    # ABD Doğu Saati (EDT - Yaz Saati) baz alınarak: 
-    # Akşam 6 (18:00 EDT -> 22:00 UTC)
-    # Gece 10 (22:00 EDT -> 02:00 UTC)
-    - cron: '0 2,22 * * *'
-  workflow_dispatch: # Manuel çalıştırma butonu
+    # Günde 2 defa çalışır. (UTC saatine göredir. Türkiye saati ile sabah 09:00 ve akşam 18:00)
+    - cron: '0 6,15 * * *'
+  workflow_dispatch: # Senin yaptığın gibi manuel tetikleme butonu
+
+env:
+  # Ekran görüntüsündeki Node.js 20 uyarısını çözen kod:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  build:
+  publish_article:
     runs-on: ubuntu-latest
-    
-    # EKLENEN KISIM 1: Botun depoya dosya yükleyebilmesi için yazma izni
     permissions:
-      contents: write 
+      contents: write # Botun keywords.txt dosyasını güncelleyebilmesi için gerekli izin
 
     steps:
-      - name: Kodlari Cek
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Python Kur
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.14.3'
+          python-version: '3.10'
 
-      - name: Kutuphaneleri Yukle
+      - name: Install Dependencies
         run: |
-          pip install google-genai requests
+          python -m pip install --upgrade pip
+          pip install requests google-genai
 
-      - name: Scripti Calistir
+      - name: Run Publisher Script
+        env:
+          # Python kodundaki os.getenv() komutları bu sırları (Secrets) çekecek
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          WP_APP_PASS: ${{ secrets.WP_APP_PASS }}
+          # Aşağıdakileri Secrets'a eklemediyseniz doğrudan kodun içinde de kalabilir, 
+          # ancak buraya eklediyseniz başındaki '#' işaretini kaldırın.
+          # WP_URL: ${{ secrets.WP_URL }}
+          # WP_USER: ${{ secrets.WP_USER }}
         run: python main.py
-        # EĞER ŞİFRELERİNİ GITHUB SECRETS'A KOYDUYSAN BURAYI AÇ (Güvenlik için şiddetle tavsiye ederim)
-        # env:
-        #   GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
-      # EKLENEN KISIM 2: Kullanılan kelimeyi txt dosyasından silip GitHub'a geri kaydetme
-      - name: Kullanilan Kelimeyi Sil ve Kaydet
+      - name: Commit and Push Updated Keywords
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add keywords.txt
-          git commit -m "Auto-update: Kullanilan kelime silindi [skip ci]" || echo "Değişiklik yok"
-          git push
+          # Sadece dosyada bir değişiklik varsa (kelime silindiyse) commit atar
+          git diff --quiet && git diff --staged --quiet || (git commit -m "bot: Auto-removed published keyword [skip ci]" && git push)
