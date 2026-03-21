@@ -1,10 +1,11 @@
-🤖 AI Technical Content Automator (Gemini 3 Flash & WordPress)
+🤖 AI Technical Content Automator 
+
 Bu proje, belirlenen teknik anahtar kelimelerden yola çıkarak; uzman seviyesinde, SEO uyumlu ve görsellerle desteklenmiş teknik makaleleri tam otomatik bir şekilde üretip WordPress sitenizde yayınlayan bir Python botudur.
 
 🌟 Öne Çıkan Özellikler
 Dinamik Persona Seçimi: Makaleler rastgele seçilen uzman kimlikleriyle (SCADA Mimarı, Saha Mühendisi vb.) yazılır.
 
-Gemini 3 Flash Entegrasyonu: En yeni google-genai kütüphanesi ile hızlı ve yüksek kaliteli içerik üretimi.
+Gemini Entegrasyonu: En yeni google-genai kütüphanesi ile hızlı ve yüksek kaliteli içerik üretimi.
 
 Multimodal Yetenek: Makale konusuna uygun profesyonel kapak görsellerini yapay zeka ile oluşturur ve WordPress ortam kütüphanesine yükler.
 
