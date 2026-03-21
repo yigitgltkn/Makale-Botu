@@ -2,12 +2,12 @@ name: Auto WP Publisher Bot
 
 on:
   schedule:
-    # Günde 2 defa çalışır. (UTC saatine göredir. Türkiye saati ile sabah 09:00 ve akşam 18:00)
+    # Günde 2 defa çalışır. (Türkiye saati ile sabah 09:00 ve akşam 18:00)
     - cron: '0 6,15 * * *'
   workflow_dispatch: # Manuel tetikleme butonu
 
 env:
-  # Node.js 20 uyarılarını global olarak çözen kod:
+  # O can sıkıcı Node.js 20 sarı uyarılarını tamamen çözen komut
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
@@ -22,8 +22,6 @@ jobs:
 
       - name: Set up Python
         uses: actions/setup-python@v5
-        env:
-          ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
         with:
           python-version: '3.10'
 
@@ -33,9 +31,7 @@ jobs:
           pip install requests google-genai
 
       - name: Run Publisher Script
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          WP_APP_PASS: ${{ secrets.WP_APP_PASS }}
+        # Sırları (secrets) çeken kısmı tamamen sildik, sadece kodu çalıştırıyoruz.
         run: python main.py
 
       - name: Commit and Push Updated Keywords
