@@ -18,7 +18,10 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5 # v4 yerine v5 yapıyoruz
+
+      - name: Set up Python
+        uses: actions/setup-python@v6 # v5 yerine v6 yapıyoruz
 
       - name: Set up Python
         uses: actions/setup-python@v5
