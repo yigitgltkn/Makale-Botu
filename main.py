@@ -22,11 +22,13 @@ WP_CATEGORIES = {
     "Infrastructure": 401,
     "SCADA": 283,
     "Energy": 496,
-    "Water - AI": 281
+    "GIS & Mapping": 524,
+    "IIoT & Edge": 523,
+    "AI & Automation": 281
 }
 
 # ==========================================
-# 2. WORDPRESS HABERLEŞME MODÜLÜ (Değişmedi)
+# 2. WORDPRESS HABERLEŞME MODÜLÜ
 # ==========================================
 def wp_medya_yukle_hafizadan(resim_bytes, dosya_adi="kapak_fotografi.jpg"):
     print(f"\nGörsel (RAM üzerinden) WordPress'e yükleniyor: {dosya_adi}")
@@ -84,8 +86,10 @@ def makale_yayinla(baslik, icerik, kategori_id, medya_id, etiket_id_listesi):
     if response.status_code == 201:
         print(f"\n✅ HARİKA! Makale başarıyla sitende yayımlandı!")
         print(f"Makale Linki: {response.json().get('link')}")
+        return True
     else:
         print("\n❌ WordPress'e gönderilirken bir hata oluştu:", response.text)
+        return False
 
 # ==========================================
 # 3. ANA ÇALIŞTIRMA MANTIĞI
@@ -93,15 +97,15 @@ def makale_yayinla(baslik, icerik, kategori_id, medya_id, etiket_id_listesi):
 try:
     print("Bot başlatılıyor, lütfen bekleyin...\n")
     
+    # API Anahtarı Kontrolü
     if not GEMINI_API_KEY or not WP_APP_PASS:
-        raise ValueError("❌ API Anahtarları eksik! GitHub Secrets'ı kontrol edin.")
+        raise ValueError("❌ API Anahtarları eksik! Lütfen ortam değişkenlerini kontrol edin.")
 
     client = genai.Client(api_key=GEMINI_API_KEY)
-    
-    secilen_kategori_adi = random.choice(list(WP_CATEGORIES.keys()))
-    kategori_id = WP_CATEGORIES[secilen_kategori_adi]
-    print(f"Seçilen Kategori: {secilen_kategori_adi} (ID: {kategori_id})")
 
+    # ==========================================
+    # DOSYADAN KONU OKUMA (HENÜZ SİLME)
+    # ==========================================
     dosya_adi = "keywords.txt"
     if not os.path.exists(dosya_adi):
         raise FileNotFoundError(f"❌ '{dosya_adi}' bulunamadı! Lütfen kelime listenizi ekleyin.")
@@ -112,14 +116,15 @@ try:
     if not satirlar:
         raise ValueError(f"❌ '{dosya_adi}' dosyası boş! Lütfen yeni konular ekleyin.")
 
-    secilen_hedef_konu = satirlar.pop(0)
-
-    with open(dosya_adi, "w", encoding="utf-8") as file:
-        for satir in satirlar:
-            file.write(satir + "\n")
+    # İlk sıradaki konuyu SADECE OKU
+    secilen_hedef_konu = satirlar[0]
 
     print(f"🎯 Hedeflenen Niş Konu: {secilen_hedef_konu}")
-    
+    print(f"Kalan Konu Sayısı: {len(satirlar)}")
+
+    # ==========================================
+    # DİNAMİK ŞABLON VE PERSONA SEÇİMİ
+    # ==========================================
     hedef_kitleler = ["Senior SCADA Engineers in NA/EU", "Water Infrastructure Managers", "Industrial Software Developers", "Energy Grid Architects"]
     yazar_personasi = [
         "a strict, data-driven Senior SCADA Architect",
@@ -138,7 +143,7 @@ try:
     secilen_persona = random.choice(yazar_personasi)
     secilen_yapi = random.choice(makale_yapisi)
 
-    # --- BAŞLIK ÜRETİMİ (GÜNCELLENDİ: Tıklama Odaklı) ---
+    # --- BAŞLIK ÜRETİMİ ---
     print("\nYapay zeka bu konu için rekabetçi bir başlık düşünüyor...")
     baslik_prompt = f"""Act as {secilen_persona} writing for a B2B engineering blog. 
     Generate ONE highly engaging, click-worthy, SEO-optimized blog post title specifically about '{secilen_hedef_konu}'. 
@@ -150,30 +155,33 @@ try:
     baslik_yaniti = client.models.generate_content(
         model='gemini-3-flash-preview',
         contents=baslik_prompt,
-        config=types.GenerateContentConfig(temperature=0.8) # Yaratıcılığı artırmak için 0.8 yapıldı
+        config=types.GenerateContentConfig(temperature=0.8)
     )
     uretilen_baslik = baslik_yaniti.text.strip().replace('"', '')
     print(f"🤖 Üretilen Başlık: {uretilen_baslik}")
     
-    # --- UZMAN SEVİYESİ MAKALE ÜRETİMİ (GÜNCELLENDİ: Doğal Linkleme & Pratik Kodlar) ---
-    print(f"\n1. Makale, kod blokları ve tablolar yazılıyor...")
+    # --- UZMAN SEVİYESİ MAKALE VE AKILLI KATEGORİ SEÇİMİ ---
+    print(f"\n1. Makale yazılıyor ve en uygun kategori yapay zeka tarafından seçiliyor...")
+    kategoriler_str = json.dumps(WP_CATEGORIES)
+
     makale_prompt = f"""
     Act as {secilen_persona}. Write a highly competitive, expert-level B2B technical article in English about "{uretilen_baslik}".
     Target audience: {secilen_kitle}.
 
     CRITICAL RULES:
     1. STRUCTURE: Format: {secilen_yapi} The article MUST be comprehensive (at least 800 words).
-    2. META DESCRIPTION HOOK: The VERY FIRST paragraph MUST be exactly 1-2 sentences (strictly under 160 characters) acting as a high-converting SEO Meta Description.
-    3. REGIONAL STANDARDS: Naturally mention relevant North American (e.g., AWWA, EPA) OR European (e.g., IEC 62443, NIS2) standards.
-    4. PRACTICAL VALUE (CODE): You MUST include a dedicated section with highly practical, copy-pasteable elements. Include at least one detailed code block (C#, Python, SQL) or SCADA configuration snippet formatted within proper HTML <pre><code> tags.
-    5. SMART INTERNAL LINKING: Naturally embed 2-3 internal HTML <a> tags. CRITICAL: Vary the anchor text! Do not use generic keywords. Use descriptive variations like "optimizing water infrastructure software" or "advanced hydraulic modeling integration".
-    6. COMPARISON/DATA: MUST include at least one detailed HTML <table> for technical comparison. Use proper <table>, <tr>, <th>, <td> tags.
-    7. FORMATTING: Use strict, clean HTML (<h2>, <h3>, <ul>, <strong>). Do NOT wrap the HTML in markdown blocks (```html).
-    8. SEO TAGS: Provide 3 to 5 highly relevant SEO tags.
+    2. META DESCRIPTION: The VERY FIRST paragraph MUST be exactly 1-2 sentences acting as a high-converting SEO Meta Description.
+    3. PRACTICAL VALUE: Include at least one detailed code block (C#, Python, SQL) or configuration snippet in <pre><code> tags.
+    4. SMART INTERNAL LINKING: Naturally embed 2-3 internal HTML <a> tags with varied anchor texts. Avoid exact match over-optimization.
+    5. COMPARISON/DATA: MUST include at least one detailed HTML <table>.
+    6. FORMATTING: Use strict, clean HTML (<h2>, <h3>, <ul>, <strong>). Do NOT wrap the HTML in markdown blocks.
+    7. SEO TAGS: Provide 3 to 5 highly relevant SEO tags.
+    8. CATEGORY ASSIGNMENT: Analyze the topic and assign the most appropriate category ID from this dictionary: {kategoriler_str}
 
-    Output format MUST be a single valid JSON object with EXACTLY two keys: 
+    Output format MUST be a single valid JSON object with EXACTLY three keys: 
     - "content": A string containing the full HTML article.
     - "tags": An array of strings containing the tags.
+    - "category_id": An integer representing the chosen category ID.
     """
     
     response_text = client.models.generate_content(
@@ -188,7 +196,14 @@ try:
     makale_verisi = json.loads(response_text.text)
     icerik = makale_verisi.get("content", "")
     uretilen_etiketler = makale_verisi.get("tags", [])
+    
+    # Kategori İşlemleri
+    kategori_id = makale_verisi.get("category_id", 401) 
+    kategori_isim_list = [k for k, v in WP_CATEGORIES.items() if v == kategori_id]
+    kategori_isim = kategori_isim_list[0] if kategori_isim_list else "Infrastructure"
+    
     print("✅ Uzman seviyesi makale başarıyla oluşturuldu!")
+    print(f"📂 Yapay Zekanın Seçtiği Kategori: {kategori_isim} (ID: {kategori_id})")
 
     # --- ETİKETLER ---
     print(f"\nEtiketler WordPress'e işleniyor: {uretilen_etiketler}")
@@ -226,10 +241,22 @@ try:
     print(f"✅ Görsel başarıyla oluşturuldu! (Kullanılan Stil: {secilen_stil})")
 
     # --- YAYINLAMA ---
-    dosya_adi = f"kapak_{secilen_kategori_adi.replace(' ', '_').lower()}_{random.randint(1000,9999)}.jpg"
-    medya_id = wp_medya_yukle_hafizadan(resim_bytes, dosya_adi=dosya_adi)
+    dosya_adi_medya = f"kapak_{kategori_isim.replace(' ', '_').replace('&', 'and').lower()}_{random.randint(1000,9999)}.jpg"
+    medya_id = wp_medya_yukle_hafizadan(resim_bytes, dosya_adi=dosya_adi_medya)
     
-    makale_yayinla(uretilen_baslik, icerik, kategori_id, medya_id, etiket_id_listesi)
+    basari_durumu = makale_yayinla(uretilen_baslik, icerik, kategori_id, medya_id, etiket_id_listesi)
+
+    # ==========================================
+    # BAŞARILI YAYIN SONRASI DOSYADAN SİLME
+    # ==========================================
+    if basari_durumu:
+        satirlar.pop(0) 
+        with open(dosya_adi, "w", encoding="utf-8") as file:
+            for satir in satirlar:
+                file.write(satir + "\n")
+        print(f"✅ İşlem tamamlandı! '{secilen_hedef_konu}' listeden güvenli bir şekilde silindi.")
+    else:
+        print("⚠️ Makale yayınlanamadığı için kelime dosyadan silinmedi. Bir sonraki çalışmada tekrar denenecek.")
 
 except json.JSONDecodeError:
     print("\n❌ Makale JSON formatında oluşturulamadı. Lütfen logu inceleyin.")
