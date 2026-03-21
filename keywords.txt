@@ -1,4 +1,3 @@
-Practical C# Algorithms for Filtering Noise in Ultrasonic Flowmeter Data (With Code)
 What is Industrial IoT? A Practical Guide to Bridging IT and OT Networks
 Step-by-Step: Managing Complex QGIS Layers for Regional Water Infrastructure Mapping
 Implementation Guide: Zero-Trust Architecture for Bridging IT and OT in Municipal Utilities
