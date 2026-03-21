@@ -7,8 +7,8 @@ on:
   workflow_dispatch: # Senin yaptığın gibi manuel tetikleme butonu
 
 env:
-  # Ekran görüntüsündeki Node.js 20 uyarısını çözen kod:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # Ekran görüntüsündeki Node.js 20 uyarısını tamamen çözen kod:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   publish_article:
