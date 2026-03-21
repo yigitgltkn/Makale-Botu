@@ -30,6 +30,38 @@ WP_CATEGORIES = {
 # ==========================================
 # 2. WORDPRESS HABERLEŞME MODÜLÜ
 # ==========================================
+def wp_son_makaleleri_getir(limit=5):
+    """Sitedeki en son yayınlanan makaleleri çeker (İç linkleme için)"""
+    print("\nSiteden güncel makale linkleri çekiliyor...")
+    url = f"{WP_URL}/wp-json/wp/v2/posts"
+    params = {
+        "per_page": limit,
+        "status": "publish",
+        "_fields": "title,link"
+    }
+    try:
+        response = requests.get(url, params=params)
+        if response.status_code == 200:
+            makaleler = response.json()
+            link_listesi = []
+            for m in makaleler:
+                baslik = html.unescape(m.get("title", {}).get("rendered", ""))
+                link = m.get("link", "")
+                link_listesi.append(f"- Title: '{baslik}' | URL: {link}")
+            
+            if link_listesi:
+                print(f"✅ {len(link_listesi)} adet makale başarıyla çekildi.")
+                return "\n".join(link_listesi)
+            else:
+                print("⚠️ Sitede henüz yayınlanmış makale bulunamadı.")
+                return ""
+        else:
+            print("❌ Makaleler çekilemedi:", response.text)
+            return ""
+    except Exception as e:
+        print("❌ Makale çekme hatası:", e)
+        return ""
+
 def wp_medya_yukle_hafizadan(resim_bytes, dosya_adi="kapak_fotografi.jpg"):
     print(f"\nGörsel (RAM üzerinden) WordPress'e yükleniyor: {dosya_adi}")
     url = f"{WP_URL}/wp-json/wp/v2/media"
@@ -97,15 +129,15 @@ def makale_yayinla(baslik, icerik, kategori_id, medya_id, etiket_id_listesi):
 try:
     print("Bot başlatılıyor, lütfen bekleyin...\n")
     
-    # API Anahtarı Kontrolü
     if not GEMINI_API_KEY or not WP_APP_PASS:
         raise ValueError("❌ API Anahtarları eksik! Lütfen ortam değişkenlerini kontrol edin.")
 
     client = genai.Client(api_key=GEMINI_API_KEY)
 
-    # ==========================================
-    # DOSYADAN KONU OKUMA (HENÜZ SİLME)
-    # ==========================================
+    # 1. Siteden Mevcut Makaleleri Çek (İç Linkleme İçin)
+    mevcut_makaleler_str = wp_son_makaleleri_getir(limit=5)
+
+    # 2. Dosyadan Konu Okuma (HENÜZ SİLME)
     dosya_adi = "keywords.txt"
     if not os.path.exists(dosya_adi):
         raise FileNotFoundError(f"❌ '{dosya_adi}' bulunamadı! Lütfen kelime listenizi ekleyin.")
@@ -116,15 +148,12 @@ try:
     if not satirlar:
         raise ValueError(f"❌ '{dosya_adi}' dosyası boş! Lütfen yeni konular ekleyin.")
 
-    # İlk sıradaki konuyu SADECE OKU
     secilen_hedef_konu = satirlar[0]
 
     print(f"🎯 Hedeflenen Niş Konu: {secilen_hedef_konu}")
     print(f"Kalan Konu Sayısı: {len(satirlar)}")
 
-    # ==========================================
-    # DİNAMİK ŞABLON VE PERSONA SEÇİMİ
-    # ==========================================
+    # 3. Dinamik Şablon ve Persona Seçimi
     hedef_kitleler = ["Senior SCADA Engineers in NA/EU", "Water Infrastructure Managers", "Industrial Software Developers", "Energy Grid Architects"]
     yazar_personasi = [
         "a strict, data-driven Senior SCADA Architect",
@@ -160,8 +189,8 @@ try:
     uretilen_baslik = baslik_yaniti.text.strip().replace('"', '')
     print(f"🤖 Üretilen Başlık: {uretilen_baslik}")
     
-    # --- UZMAN SEVİYESİ MAKALE VE AKILLI KATEGORİ SEÇİMİ ---
-    print(f"\n1. Makale yazılıyor ve en uygun kategori yapay zeka tarafından seçiliyor...")
+    # --- UZMAN SEVİYESİ MAKALE, AKILLI KATEGORİ VE İÇ LİNKLEME ---
+    print(f"\n1. Makale yazılıyor, iç linkler yerleştiriliyor ve kategori seçiliyor...")
     kategoriler_str = json.dumps(WP_CATEGORIES)
 
     makale_prompt = f"""
@@ -172,11 +201,15 @@ try:
     1. STRUCTURE: Format: {secilen_yapi} The article MUST be comprehensive (at least 800 words).
     2. META DESCRIPTION: The VERY FIRST paragraph MUST be exactly 1-2 sentences acting as a high-converting SEO Meta Description.
     3. PRACTICAL VALUE: Include at least one detailed code block (C#, Python, SQL) or configuration snippet in <pre><code> tags.
-    4. SMART INTERNAL LINKING: Naturally embed 2-3 internal HTML <a> tags with varied anchor texts. Avoid exact match over-optimization.
-    5. COMPARISON/DATA: MUST include at least one detailed HTML <table>.
-    6. FORMATTING: Use strict, clean HTML (<h2>, <h3>, <ul>, <strong>). Do NOT wrap the HTML in markdown blocks.
-    7. SEO TAGS: Provide 3 to 5 highly relevant SEO tags.
-    8. CATEGORY ASSIGNMENT: Analyze the topic and assign the most appropriate category ID from this dictionary: {kategoriler_str}
+    4. COMPARISON/DATA: MUST include at least one detailed HTML <table>.
+    5. FORMATTING: Use strict, clean HTML (<h2>, <h3>, <ul>, <strong>). Do NOT wrap the HTML in markdown blocks.
+    6. SEO TAGS: Provide 3 to 5 highly relevant SEO tags.
+    7. CATEGORY ASSIGNMENT: Analyze the topic and assign the most appropriate category ID from this dictionary: {kategoriler_str}
+    
+    8. INTERNAL LINKING (CRITICAL): 
+    Here are the recently published articles on our site:
+    {mevcut_makaleler_str}
+    If the list above is not empty, you MUST naturally embed 1-2 HTML <a> tags pointing EXACTLY to those URLs. Match the context of your current article to the title of the provided links. Use varied and natural anchor text (do not just copy the exact title). Do NOT invent fake URLs. If no provided link is relevant, skip internal linking.
 
     Output format MUST be a single valid JSON object with EXACTLY three keys: 
     - "content": A string containing the full HTML article.
