@@ -26,7 +26,7 @@ WP_CATEGORIES = {
 }
 
 # ==========================================
-# 2. WORDPRESS HABERLEŞME MODÜLÜ
+# 2. WORDPRESS HABERLEŞME MODÜLÜ (Değişmedi)
 # ==========================================
 def wp_medya_yukle_hafizadan(resim_bytes, dosya_adi="kapak_fotografi.jpg"):
     print(f"\nGörsel (RAM üzerinden) WordPress'e yükleniyor: {dosya_adi}")
@@ -93,16 +93,15 @@ def makale_yayinla(baslik, icerik, kategori_id, medya_id, etiket_id_listesi):
 try:
     print("Bot başlatılıyor, lütfen bekleyin...\n")
     
+    if not GEMINI_API_KEY or not WP_APP_PASS:
+        raise ValueError("❌ API Anahtarları eksik! GitHub Secrets'ı kontrol edin.")
+
     client = genai.Client(api_key=GEMINI_API_KEY)
     
-    # Kategori Seçimi
     secilen_kategori_adi = random.choice(list(WP_CATEGORIES.keys()))
     kategori_id = WP_CATEGORIES[secilen_kategori_adi]
     print(f"Seçilen Kategori: {secilen_kategori_adi} (ID: {kategori_id})")
 
-    # ==========================================
-    # DOSYADAN KONU OKUMA VE SİLME (ASLA TEKRARA DÜŞMEME)
-    # ==========================================
     dosya_adi = "keywords.txt"
     if not os.path.exists(dosya_adi):
         raise FileNotFoundError(f"❌ '{dosya_adi}' bulunamadı! Lütfen kelime listenizi ekleyin.")
@@ -113,20 +112,14 @@ try:
     if not satirlar:
         raise ValueError(f"❌ '{dosya_adi}' dosyası boş! Lütfen yeni konular ekleyin.")
 
-    # İlk sıradaki konuyu al ve listeden çıkar
     secilen_hedef_konu = satirlar.pop(0)
 
-    # Kalanları dosyaya geri yaz (Böylece aynı konu bir daha ASLA seçilmez)
     with open(dosya_adi, "w", encoding="utf-8") as file:
         for satir in satirlar:
             file.write(satir + "\n")
 
     print(f"🎯 Hedeflenen Niş Konu: {secilen_hedef_konu}")
-    print(f"Kalan Konu Sayısı: {len(satirlar)}")
-
-    # ==========================================
-    # DİNAMİK ŞABLON VE PERSONA SEÇİMİ
-    # ==========================================
+    
     hedef_kitleler = ["Senior SCADA Engineers in NA/EU", "Water Infrastructure Managers", "Industrial Software Developers", "Energy Grid Architects"]
     yazar_personasi = [
         "a strict, data-driven Senior SCADA Architect",
@@ -138,43 +131,44 @@ try:
         "A step-by-step technical troubleshooting and implementation guide.",
         "A deep-dive technical case study focusing on real-world engineering constraints.",
         "A rigorous comparison format highlighting hidden technical pitfalls and performance metrics.",
-        "A myth-busting technical analysis challenging common industry assumptions."
+        "A highly practical 'How-To' guide featuring copy-pasteable solutions."
     ]
 
     secilen_kitle = random.choice(hedef_kitleler)
     secilen_persona = random.choice(yazar_personasi)
     secilen_yapi = random.choice(makale_yapisi)
 
-    # --- BAŞLIK ÜRETİMİ ---
+    # --- BAŞLIK ÜRETİMİ (GÜNCELLENDİ: Tıklama Odaklı) ---
     print("\nYapay zeka bu konu için rekabetçi bir başlık düşünüyor...")
     baslik_prompt = f"""Act as {secilen_persona} writing for a B2B engineering blog. 
     Generate ONE highly engaging, click-worthy, SEO-optimized blog post title specifically about '{secilen_hedef_konu}'. 
     Target audience: {secilen_kitle}.
-    CRITICAL RULE: The title MUST sound like an advanced engineering guide or a deep-dive technical solution.
+    CRITICAL RULE 1: The title MUST use click-trigger formats such as "How-To:", "The Ultimate Guide:", "Practical Examples:", or "Step-by-Step:".
+    CRITICAL RULE 2: It must sound like an advanced engineering guide, NOT a boring academic paper.
     Return ONLY the exact title text. No quotes, no extra formatting."""
     
     baslik_yaniti = client.models.generate_content(
         model='gemini-3-flash-preview',
         contents=baslik_prompt,
-        config=types.GenerateContentConfig(temperature=0.7)
+        config=types.GenerateContentConfig(temperature=0.8) # Yaratıcılığı artırmak için 0.8 yapıldı
     )
     uretilen_baslik = baslik_yaniti.text.strip().replace('"', '')
     print(f"🤖 Üretilen Başlık: {uretilen_baslik}")
     
-    # --- UZMAN SEVİYESİ MAKALE ÜRETİMİ (JSON Garantili) ---
-    print(f"\n1. Makale, kod blokları ve tablolar yazılıyor ('gemini-3-flash-preview')...")
+    # --- UZMAN SEVİYESİ MAKALE ÜRETİMİ (GÜNCELLENDİ: Doğal Linkleme & Pratik Kodlar) ---
+    print(f"\n1. Makale, kod blokları ve tablolar yazılıyor...")
     makale_prompt = f"""
     Act as {secilen_persona}. Write a highly competitive, expert-level B2B technical article in English about "{uretilen_baslik}".
     Target audience: {secilen_kitle}.
 
     CRITICAL RULES:
-    1. STRUCTURE: The article must follow this specific format: {secilen_yapi} The article MUST be comprehensive (at least 700 words).
+    1. STRUCTURE: Format: {secilen_yapi} The article MUST be comprehensive (at least 800 words).
     2. META DESCRIPTION HOOK: The VERY FIRST paragraph MUST be exactly 1-2 sentences (strictly under 160 characters) acting as a high-converting SEO Meta Description.
-    3. REGIONAL STANDARDS: You MUST naturally mention relevant North American (e.g., AWWA, EPA, NERC CIP) OR European (e.g., IEC 62443, NIS2) engineering standards.
-    4. TECHNICAL DEPTH: Include at least one practical code snippet, SQL query, or configuration example relevant to the topic formatted within proper HTML <code> and <pre> tags.
-    5. EXTERNAL LINKS: Include at least 2 HTML <a> tags linking to authoritative sources (like IEEE, official software docs).
-    6. COMPARISON/DATA: MUST include at least one detailed HTML <table> for technical comparison or data structuring. Use proper <table>, <tr>, <th>, <td> tags.
-    7. FORMATTING: Use strict, clean HTML (<h2>, <h3>, <ul>, <strong>). Do NOT wrap the HTML in markdown blocks.
+    3. REGIONAL STANDARDS: Naturally mention relevant North American (e.g., AWWA, EPA) OR European (e.g., IEC 62443, NIS2) standards.
+    4. PRACTICAL VALUE (CODE): You MUST include a dedicated section with highly practical, copy-pasteable elements. Include at least one detailed code block (C#, Python, SQL) or SCADA configuration snippet formatted within proper HTML <pre><code> tags.
+    5. SMART INTERNAL LINKING: Naturally embed 2-3 internal HTML <a> tags. CRITICAL: Vary the anchor text! Do not use generic keywords. Use descriptive variations like "optimizing water infrastructure software" or "advanced hydraulic modeling integration".
+    6. COMPARISON/DATA: MUST include at least one detailed HTML <table> for technical comparison. Use proper <table>, <tr>, <th>, <td> tags.
+    7. FORMATTING: Use strict, clean HTML (<h2>, <h3>, <ul>, <strong>). Do NOT wrap the HTML in markdown blocks (```html).
     8. SEO TAGS: Provide 3 to 5 highly relevant SEO tags.
 
     Output format MUST be a single valid JSON object with EXACTLY two keys: 
@@ -204,7 +198,7 @@ try:
         if e_id:
             etiket_id_listesi.append(e_id)
 
-    # --- GÖRSEL ÜRETİMİ (Rastgele Stiller) ---
+    # --- GÖRSEL ÜRETİMİ ---
     print(f"\n2. Kapak görseli oluşturuluyor ('gemini-3.1-flash-image-preview')...")
     gorsel_stilleri = [
         "Blueprint/schematic technical drawing style, dark mode",
