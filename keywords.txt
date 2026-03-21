@@ -1,4 +1,3 @@
-How-To: Writing GeoSCADA Historian SQL Queries for Water Valve Predictive Maintenance
 Top 5 Open-Source Tools for Advanced Spatial Data Analysis in Utilities
 Practical C# Algorithms for Filtering Noise in Ultrasonic Flowmeter Data (With Code)
 What is Industrial IoT? A Practical Guide to Bridging IT and OT Networks
