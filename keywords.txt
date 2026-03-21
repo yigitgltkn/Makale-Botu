@@ -1,4 +1,3 @@
-Developing an AI-powered SCADA anomaly detection bot using C#
 Securing Virtual Power Plants (VPP) under European NIS2 directives
 GeoSCADA historian SQL queries for predictive maintenance of water valves
 Managing complex QGIS layers for regional water infrastructure mapping
