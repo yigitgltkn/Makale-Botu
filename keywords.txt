@@ -1,4 +1,3 @@
-How Artificial Intelligence is Transforming Industrial Automation in 2026
 Deep Dive: Evaluating Edge AI Hardware Lifecycles for Remote Industrial Deployments
 AWWA Compliance Guide: Building Leak Detection Algorithms for Aging Water Grids
 Machine Learning for Infrastructure: A Guide to Anomaly Detection in SCADA Networks
