@@ -27,6 +27,11 @@ jobs:
           pip install requests google-genai
 
       - name: Run Publisher Script
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          WP_APP_PASS: ${{ secrets.WP_APP_PASS }}
+          WP_USER: ${{ secrets.WP_USER }}
+          WP_URL: ${{ secrets.WP_URL }}
         run: python main.py
 
       - name: Commit and Push Updated Keywords
