@@ -9,6 +9,11 @@ Bu depo (repository), son derece teknik B2B mühendislik makaleleri sentezleyen,
 * **Çoklu Modalite (Multimodal Generation):** Sadece metin değil, `gemini-3.1-flash-image-preview` modeli kullanılarak makale bağlamına uygun, profesyonel teknik çizim veya şematik kapak görselleri sıfırdan üretilir.
 * **Otomatize Edilmiş Dağıtım (Deployment) Süreci:** Medya yüklemeleri (disk I/O darboğazını önlemek için doğrudan RAM byte'ları üzerinden), etiket (tag) eşleştirme/oluşturma, kategori atama ve nihai HTML yayınlama işlemleri sıfır insan müdahalesi ile gerçekleşir.
 * **Teknoloji Yığını (Tech Stack):** Python 3.14, Google GenAI SDK, WordPress REST API, JSON.
+* ## 🌐 Canlı Üretim Ortamı (Live Production)
+
+Bu otonom ajan aktif olarak üretim ortamında (production) çalışmaktadır. Sentezlenen tüm teknik makaleler, su altyapısı, hidrolik modelleme ve SCADA sistemleri üzerine odaklanan B2B teknik bir platform olan **[Hidrosoft.net](https://www.hidrosoft.net)** adresinde otomatik olarak yayınlanmaktadır. 
+
+Bu entegrasyon; model halüsinasyonlarının (hallucination) önlendiği, SEO etiketlemelerinin doğru yapıldığı ve API üzerinden dış bir sunucuya (CMS) sıfır hatayla veri aktarıldığı tam operasyonel bir Generative AI ürününün canlı kanıtıdır.
 
 ## ⚙️ Sistem Nasıl Çalışıyor?
 1. **Bağlam Çıkarımı (Context Retrieval):** Hedef platformdan güncel veriler (son makaleler) çekilir.
