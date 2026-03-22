@@ -1,4 +1,3 @@
-Implementation Guide: Zero-Trust Architecture for Bridging IT and OT in Municipal Utilities
 How Artificial Intelligence is Transforming Industrial Automation in 2026
 Deep Dive: Evaluating Edge AI Hardware Lifecycles for Remote Industrial Deployments
 AWWA Compliance Guide: Building Leak Detection Algorithms for Aging Water Grids
