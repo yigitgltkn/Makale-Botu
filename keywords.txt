@@ -1,4 +1,3 @@
-Machine Learning for Infrastructure: A Guide to Anomaly Detection in SCADA Networks
 How-To: Building Automated Regulatory Reporting Scripts for GeoSCADA in C#
 Case Study: AI-Driven Vibration Analysis for Gas Turbine Predictive Maintenance
 Advanced Tutorial: QGIS Spatial Data Integration for Power Grid Mapping
