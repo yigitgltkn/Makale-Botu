@@ -1,4 +1,3 @@
-Case Study: AI-Driven Vibration Analysis for Gas Turbine Predictive Maintenance
 Advanced Tutorial: QGIS Spatial Data Integration for Power Grid Mapping
 The Ultimate Guide to Securing Virtual Power Plants (VPP) Under NIS2 Directives
 Expert Guide: Troubleshooting Reliance SCADA Protocols in High-Latency Grids
