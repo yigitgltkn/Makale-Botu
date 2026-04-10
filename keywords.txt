@@ -1,4 +1,3 @@
-How-To: Leveraging GIS Data for Predictive Maintenance in Municipal Water Grids
 Step-by-Step: Integrating Weather APIs with GeoSCADA for Wind Farm Yield Prediction
 Security Blueprint: Implementing Zero-Trust in Legacy Water Infrastructure SCADA
 Best Practices: Bridging IT and OT Networks Securely in Power Generation Facilities
