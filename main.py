@@ -183,27 +183,45 @@ class ContentAgent:
         return json.loads(response.text)
 
     def generate_cover_image(self, title):
-        logger.info("Kapak görseli oluşturuluyor (Multimodal Generation)...")
-        styles = [
-            "Blueprint/schematic technical drawing style, dark mode",
-            "Photorealistic industrial control room, cinematic lighting",
-            "High-tech server rack and SCADA screens, isometric 3D render",
-            "Futuristic AI laboratory setting, high contrast"
-        ]
-        chosen_style = random.choice(styles)
-        prompt = f"A professional blog cover image for the engineering topic: '{title}'. Art style: {chosen_style}. Clean composition, NO text, NO letters, NO words."
+        """
+        Makale başlığına göre sade, gerçekçi ve dark temalı bir görsel oluşturur.
+        Rastgele stiller kaldırıldı, kurumsal ve minimalist bir tarza sabitlendi.
+        """
+        logger.info(f"Kapak görseli oluşturuluyor (Başlık: {title})...")
         
-        response = self.client.models.generate_content(
-            model='gemini-3.1-flash-image-preview',
-            contents=[prompt]
+        # --- YENİ SADE VE GERÇEKÇİ PROMPT YAPISI ---
+        # Tasvir: Başlıkla ilgili ana objeye odaklanan, minimalist, 
+        # loş ışıklı (dark), profesyonel fotoğraf tarzı.
+        prompt = (
+            f"A professional, minimalist, photorealistic corporate-style blog cover image "
+            f"illustrating the concept of '{title}'. "
+            f"The image should have a deep dark theme and moody aesthetic, with soft, "
+            f"focused professional lighting on a single central object or clean scene. "
+            f"Uncluttered composition, low saturation, authentic textures. "
+            f"CRITICAL: NO text, NO letters, NO words, NO logos inside the image."
         )
         
-        for part in response.parts:
-            if part.inline_data is not None:
-                logger.info(f"Görsel başarıyla oluşturuldu. (Stil: {chosen_style})")
-                return part.inline_data.data
-        raise ValueError("Modelden görsel verisi alınamadı!")
+        try:
+            response = self.client.models.generate_content(
+                # Model ismini backend ayarlarınıza göre kontrol edin, 
+                # genellikle imagen veya flash-image modelleri kullanılır.
+                model='gemini-3.1-flash-image-preview', 
+                contents=[prompt]
+            )
+            
+            for part in response.parts:
+                if part.inline_data is not None:
+                    # Başarılı olduğunda hangi başlık için üretildiğini logla
+                    logger.info(f"Görsel sade/gerçekçi tarzda başarıyla oluşturuldu.")
+                    return part.inline_data.data
+            
+            raise ValueError("Modelden görsel verisi alınamadı!")
 
+        except Exception as e:
+            logger.error(f"Görsel oluşturma hatası: {e}")
+            # Hata durumunda akışın bozulmaması için None dönebiliriz,
+            # ana akış media_id controlü yapıyor.
+            return None
 
 # ==========================================
 # ANA ÇALIŞTIRMA (ORCHESTRATION)
