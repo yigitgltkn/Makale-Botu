@@ -1,4 +1,3 @@
-Deployment Strategy: Edge AI for Municipal Water Leak Detection Networks
 Technical Comparison: Ultrasonic vs. Electromagnetic Flowmeters Under AWWA Standards
 Edge Computing 101: Reducing Latency in Critical Industrial Automation
 How-To: Real-Time Hydraulic Modeling Calibration Using Live Reliance SCADA Telemetry
