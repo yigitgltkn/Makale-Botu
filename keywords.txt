@@ -1,4 +1,3 @@
-Best Practices: Bridging IT and OT Networks Securely in Power Generation Facilities
 Deployment Strategy: Edge AI for Municipal Water Leak Detection Networks
 Technical Comparison: Ultrasonic vs. Electromagnetic Flowmeters Under AWWA Standards
 Edge Computing 101: Reducing Latency in Critical Industrial Automation
