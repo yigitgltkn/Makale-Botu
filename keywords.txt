@@ -1,4 +1,3 @@
-C# Data Parsers: Integrating Non-Standard IoT Sensors into Water SCADA Systems
 Step-by-Step: Configuring DNP3 Protocol Over Secure VPNs for Remote Renewable Sites
 QGIS Workflow: Exporting Complex Topographical Data into Industrial SCADA Mapping
 Database Architecture: SQL Partitioning Strategies for Multi-Site Energy SCADA
