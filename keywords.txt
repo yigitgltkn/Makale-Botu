@@ -1,4 +1,3 @@
-QGIS Workflow: Exporting Complex Topographical Data into Industrial SCADA Mapping
 Database Architecture: SQL Partitioning Strategies for Multi-Site Energy SCADA
 Enterprise Integration: AWWA Compliant Water Quality Monitoring in Modern SCADA
 Hardware Guide: Evaluating Edge AI Constraints for Harsh Industrial Environments
